@@ -1,0 +1,20 @@
+our $DIR;
+
+my $libdir;
+
+BEGIN {
+    return unless eval require Alien::raylib5;
+    return unless my $rpath = Alien::raylib5->dynamic_dir;
+    $libdir = '-L' . $rpath;
+    return if $^O eq 'Win32';
+    $libdir .= $^O eq 'darwin'
+        ? ' @rpath' . $rpath
+        : ' -Wl,-rpath=' . $rpath;
+}
+
+{
+    verbose => 2,
+    alien  => ['Alien::raylib5'],
+    source => ["$DIR/*.c"],
+    libs   => $libdir,
+};

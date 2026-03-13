@@ -15,6 +15,8 @@ my $ffi = FFI::Platypus->new(
     lib => find_lib_or_die( lib => 'raylib', alien => 'Alien::raylib5' ),
 );
 
+$ffi->bundle;
+
 my @defs;
 
 package Raylib::FFI::Vector2D {
@@ -832,7 +834,9 @@ my %functions = (
     LoadTexture          => [ ['string']               => 'Texture' ],
     LoadTextureFromImage => [ ['Image']                => 'Texture2D' ],
     LoadTextureCubemap   => [ [ 'Image', 'int' ]       => 'TextureCubemap' ],
-    LoadRenderTexture    => [ [ 'int', 'int' ]         => 'RenderTexture2D' ],
+
+    rlffi_LoadRenderTexture => [ [ 'int', 'int' ]         => 'RenderTexture2D' ],
+
     IsTextureValid       => [ ['Texture']              => 'bool' ],
     UnloadTexture        => [ ['Texture2D']            => 'void' ],
     IsRenderTextureValid => [ ['RenderTexture2D']      => 'bool' ],
@@ -1105,7 +1109,10 @@ my %functions = (
 
 for my $func ( keys %functions ) {
     try {
-        $ffi->attach( $func => $functions{$func}->@* );
+        my @args = $functions{$func}->@*;
+        $func = [ $func => $func =~ s/^rlffi_//r ]
+            if $func =~ /^rlffi_/;
+        $ffi->attach( $func => @args );
     }
     catch ($e) {
         warn $e;
@@ -1113,7 +1120,7 @@ for my $func ( keys %functions ) {
 }
 
 # export all the functions lexically
-our @EXPORT_OK = grep { __PACKAGE__->can($_) } keys %functions;
+our @EXPORT_OK = grep { __PACKAGE__->can($_) } map { $_ =~ s/^rlffi_//r } keys %functions;
 our %EXPORT_TAGS = (all => \@EXPORT_OK);
 1;
 

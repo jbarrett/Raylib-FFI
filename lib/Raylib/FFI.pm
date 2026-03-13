@@ -15,6 +15,8 @@ my $ffi = FFI::Platypus->new(
     lib => find_lib_or_die( lib => 'raylib', alien => 'Alien::raylib5' ),
 );
 
+my @defs;
+
 package Raylib::FFI::Vector2D {
     use FFI::Platypus::Record qw( record_layout_1 );
     record_layout_1(
@@ -103,33 +105,32 @@ package Raylib::FFI::Image {
 }
 $ffi->type( 'record(Raylib::FFI::Image)' => 'Image' );
 
-package Raylib::FFI::Texture {
-    use FFI::Platypus::Record qw( record_layout_1 );
-    record_layout_1(
-        $ffi,
-        uint => 'id',           # OpenGL texture id
-        int  => 'width',
-        int  => 'height',
-        int  => 'mipmaps',      # number of mipmap levels, 1 by default
-        int  => 'format',       # data format (PixelFormat type)
-    );
-}
+push @defs, FFI::C::StructDef->new(
+    $ffi,
+    name => 'Texture',
+    class => 'Raylib::FFI::Texture',
+    members => [
+        id      => 'uint',  # OpenGL texture id
+        width   => 'int',
+        height  => 'int',
+        mipmaps => 'int',   # number of mipmap levels, 1 by default
+        format  => 'int',   # data format (PixelFormat type)
+    ],
+);
+$ffi->type( 'Texture' => 'Texture2D' );
+$ffi->type( 'Texture' => 'TextureCubemap' );
 
-$ffi->type( 'record(Raylib::FFI::Texture)' => 'Texture' );
-$ffi->type( 'Texture'                      => 'Texture2D' );
-$ffi->type( 'Texture'                      => 'TextureCubemap' );
-
-package Raylib::FFI::RenderTexture {
-    use FFI::Platypus::Record qw( record_layout_1 );
-    record_layout_1(
-        $ffi,
-        uint   => 'id',
-        opaque => 'texture',    # cast to Texture
-        opaque => 'depth',      # cast to Texture
-    );
-}
-$ffi->type( 'record(Raylib::FFI::RenderTexture)' => 'RenderTexture' );
-$ffi->type( 'RenderTexture'                      => 'RenderTexture2D' );
+push @defs, FFI::C::StructDef->new(
+    $ffi,
+    name => 'RenderTexture',
+    class => 'Raylib::FFI::RenderTexture',
+    members => [
+        id      => 'uint',
+        texture => 'Texture',
+        depth   => 'Texture',
+    ]
+);
+$ffi->type( 'RenderTexture' => 'RenderTexture2D' );
 
 package Raylib::FFI::NPatchInfo {
     use FFI::Platypus::Record qw( record_layout_1 );
